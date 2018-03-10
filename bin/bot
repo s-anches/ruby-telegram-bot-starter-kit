@@ -4,6 +4,7 @@ require 'telegram/bot'
 
 require './lib/message_responder'
 require './lib/app_configurator'
+require './lib/google_connect.rb'
 
 config = AppConfigurator.new
 config.configure
@@ -11,13 +12,22 @@ config.configure
 token = config.get_token
 logger = config.get_logger
 
+google_connect = GoogleConnect.new
+google = google_connect.get_connect
+spreadsheet_id = google_connect.get_spreadsheet_id
+
 logger.debug 'Starting telegram bot'
 
 Telegram::Bot::Client.run(token) do |bot|
   bot.listen do |message|
-    options = {bot: bot, message: message}
+    options = {
+      bot: bot,
+      message: message,
+      google: google,
+      spreadsheet_id: spreadsheet_id
+    }
 
-    logger.debug "@#{message.from.username}: #{message.text}" 
+    logger.debug "@#{message.from.username}: #{message.text}"
     MessageResponder.new(options).respond
   end
 end

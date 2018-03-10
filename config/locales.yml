@@ -1,3 +1,6 @@
 en:
   greeting_message: "Hi! Telegram is awesome!"
   farewell_message: "Bye! I'll miss you :("
+ru:
+  greeting_message: "Привет! Телеграмм супер крут!"
+  farewell_message: "Пока! Я буду скучать!"
