@@ -2,3 +2,4 @@ database.yml
 secrets.yml
 *.log
 Gemfile.lock
+client_secret.json

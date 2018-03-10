@@ -14,7 +14,7 @@ class GoogleConnect
     service.client_options.application_name = 'Ruby Test APP'
     service.authorization = Google::Auth::ServiceAccountCredentials.make_creds(
       json_key_io: File.open('config/client_secret.json'),
-      scope: Google::Apis::SheetsV4::AUTH_SPREADSHEETS_READONLY)
+      scope: Google::Apis::SheetsV4::AUTH_SPREADSHEETS)
 
     service
   end

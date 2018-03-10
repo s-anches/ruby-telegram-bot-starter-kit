@@ -1,10 +1,12 @@
 require './models/user'
 require './lib/message_sender'
+require 'google/apis/sheets_v4'
 
 class MessageResponder
   attr_reader :message
   attr_reader :bot
   attr_reader :user
+  attr_reader :logger
 
   def initialize(options)
     @bot = options[:bot]
@@ -12,6 +14,7 @@ class MessageResponder
     @user = User.find_or_create_by(uid: message.from.id)
     @google = options[:google]
     @spreadsheet_id = options[:spreadsheet_id]
+    @logger = AppConfigurator.new.get_logger
   end
 
   def respond
@@ -25,6 +28,80 @@ class MessageResponder
 
     on /^\/google/ do
       google
+    end
+
+    on /^\/update/ do
+      spreadsheet_id = "1yimoy-TikQiTtKrtAqzyTPRbW4pi36E5aJ-HnpcKOKE"
+
+      range = 'Ответы на форму (1)!A1:E'
+
+      response = @google.get_spreadsheet_values(spreadsheet_id, range)
+      header = response.values.first.map(&:to_s)
+      response.values.drop(1)
+      puts 'No data found.' if response.values.empty?
+
+      response.values.each do |row|
+        bot.api.send_message(
+          chat_id: message.chat.id,
+          text: "#{row[0]}, #{row[1]}, #{row[2]}, #{row[3]}, #{row[4]}"
+        )
+      end
+
+      # value_input_option = "USER_ENTERED"
+      # data = [
+      #   {
+      #     range: "Лист1!A12:C13",
+      #     majorDimension: "ROWS",
+      #     values: [["This is A12", "This is C12"], ["This is A13", "This is C13"]]
+      #   }, {
+      #     range: "Лист1!D15:E16",
+      #     majorDimension: "COLUMNS",  # сначала заполнять столбцы, затем ряды (т.е. самые внутренние списки в values - это столбцы)
+      #     values: [["This is D15", "This is D16"], ["This is E15", "=5+5"]]
+      #   },
+      # ]
+      #
+      # batch_update_values = Google::Apis::SheetsV4::BatchUpdateValuesRequest.new(
+      #     data: data,
+      #     value_input_option: value_input_option)
+      #
+      # response = @google.batch_update_values(spreadsheet_id, batch_update_values)
+      # puts "#{response.total_updated_cells} cells updated."
+      # logger.debug "Respone: #{response}"
+    end
+
+    on /^\/create/ do
+      spreadsheet_id = @spreadsheet_id
+      # range = 'Лист1!A1:E'
+
+      value_input_option = "USER_ENTERED"
+      data = [
+        {
+          range: "Лист1!A12:C13",
+          majorDimension: "ROWS",
+          values: [["This is A12", "This is C12"], ["This is A13", "This is C13"]]
+        }, {
+          range: "Лист1!D15:E16",
+          majorDimension: "COLUMNS",  # сначала заполнять столбцы, затем ряды (т.е. самые внутренние списки в values - это столбцы)
+          values: [["This is D15", "This is D16"], ["This is E15", "=5+5"]]
+        },
+      ]
+
+      batch_update_values = Google::Apis::SheetsV4::BatchUpdateValuesRequest.new(
+          data: data,
+          value_input_option: value_input_option)
+
+      response = @google.batch_update_values(spreadsheet_id, batch_update_values)
+      # header = response.values.first.map(&:to_s)
+      # response.values.drop(1)
+      # puts 'No data found.' if response.values.empty?
+      puts "#{response.total_updated_cells} cells updated."
+      logger.debug "Respone: #{response}"
+      # response.values.each do |row|
+      #   bot.api.send_message(
+      #     chat_id: message.chat.id,
+      #     text: "#{row[0]}, #{row[1]}, #{row[2]}, #{row[3]}, #{row[4]}"
+      #   )
+      # end
     end
 
     on /^\/options (.+)/ do |arg|
